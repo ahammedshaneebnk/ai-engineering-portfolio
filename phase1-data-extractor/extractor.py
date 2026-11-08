@@ -32,7 +32,6 @@ messy_text = """
 
 print(f"--- Messy Input Text ---{messy_text}")
 
-# LLM
 MODEL = "claude-haiku-5-5"
 
 # API call
@@ -49,3 +48,5 @@ response = completion(
 extracted_data = ExtractedInvoice.model_validate_json(response.choices[0].message.content)
 
 print(f"--- Output ---\n{extracted_data}")
+
+# example usage with output -> extracted_data.vendor, extracted_data.total_amount, etc.
