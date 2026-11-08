@@ -1,4 +1,3 @@
 pydantic
-httpx
-openai
+litellm
 python-dotenv
