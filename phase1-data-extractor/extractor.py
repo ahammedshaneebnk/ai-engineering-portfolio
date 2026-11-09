@@ -1,6 +1,6 @@
 import logging
 from dotenv import load_dotenv
-from litellm import completion
+from litellm import completion # why litellm? model vendor agnostic
 from pydantic import BaseModel, Field
 
 
@@ -34,19 +34,26 @@ print(f"--- Messy Input Text ---{messy_text}")
 
 MODEL = "claude-haiku-5-5"
 
-# API call
-response = completion(
-    model=MODEL,
-    messages=[
-        {"role":"user",
-         "content":f"Extract structured data from this invoice:-\n{messy_text}"}
-    ],
-    response_format=ExtractedInvoice
-)
 
-# response text into pydantic
-extracted_data = ExtractedInvoice.model_validate_json(response.choices[0].message.content)
+def extract_from_invoice(invoice:str):
+    # API call
+    response = completion(
+        model=MODEL,
+        messages=[
+            {"role":"user",
+            "content":f"Extract structured data from this invoice:-\n{invoice}"}
+        ],
+        response_format=ExtractedInvoice
+    )
 
-print(f"--- Output ---\n{extracted_data}")
+    # response text into pydantic
+    extracted_data = ExtractedInvoice.model_validate_json(response.choices[0].message.content)
 
-# example usage with output -> extracted_data.vendor, extracted_data.total_amount, etc.
+    return extracted_data
+
+
+if __name__ == "__main__":
+    print(f"--- Output ---")
+    extracted_data = extract_from_invoice(messy_text)
+    print(extracted_data)
+    print(f"Extracted Vendor: {extracted_data.vendor_name}")
