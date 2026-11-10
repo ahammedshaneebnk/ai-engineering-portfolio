@@ -1,6 +1,7 @@
+import asyncio
 import logging
 from dotenv import load_dotenv
-from litellm import completion # why litellm? model vendor agnostic
+from litellm import acompletion
 from pydantic import BaseModel, Field
 
 
@@ -22,22 +23,19 @@ class ExtractedInvoice(BaseModel):
     line_items: list[str] = Field(description="List of products or services purchased")
 
 
-# messy input text
-messy_text = """
-    Invoice from Emirates Office Supplies LLC.
-    Dated: 11-Nov-2026. 
-    Items provided: 5x Ergonomic Chairs, 2x Standing Desks.
-    Total balance to pay: 4,500.50 AED.
-"""
-
-print(f"--- Messy Input Text ---{messy_text}")
+# multiple invoices
+invoices = [
+    "Invoice from Emirates Office Supplies. Dated: 12-Oct-2026. Items: 5x Chairs. Total: 4,500 AED.",
+    "Invoice from Dubai Logistics FZCO. Dated: 14-Oct-2026. Items: Freight shipping. Total: 12,300 USD.",
+    "Invoice from Al Maya Groceries. Dated: 15-Oct-2026. Items: Office pantry supplies. Total: 850 AED."
+]
 
 MODEL = "claude-haiku-5-5"
 
 
-def extract_from_invoice(invoice:str):
+async def extract_from_invoice(invoice:str):
     # API call
-    response = completion(
+    response = await acompletion(
         model=MODEL,
         messages=[
             {"role":"user",
@@ -52,8 +50,17 @@ def extract_from_invoice(invoice:str):
     return extracted_data
 
 
+async def main():
+    # concurrent tasks list
+    tasks = [extract_from_invoice(invoice) for invoice in invoices]
+
+    # execute tasks simultaneously
+    results = await asyncio.gather(*tasks) # gather expects each arg separately, * will satisfy it by unpacking the list
+
+    for res in results:
+        print(f"Vendor: {res.vendor_name}\tInvoice Date: {res.invoice_date}")
+
+
 if __name__ == "__main__":
-    print(f"--- Output ---")
-    extracted_data = extract_from_invoice(messy_text)
-    print(extracted_data)
-    print(f"Extracted Vendor: {extracted_data.vendor_name}")
+    print("--- Output ---")
+    asyncio.run(main())
